@@ -1,0 +1,14 @@
+Pillow
+pandas
+numpy
+matplotlib
+seaborn
+tensorflow
+scikit-learn
+ipython
+grok
+pyaudio
+speechrecognition
+gtts
+elevenlabs
+gradio
