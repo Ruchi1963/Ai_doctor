@@ -19,28 +19,34 @@ query="Is there something wrong with my face?"
 model = "meta-llama/llama-4-scout-17b-16e-instruct"
 #model="llama-3.2-90b-vision-preview" #Deprecated
 
-def analyze_image_with_query(query, model, encoded_image):
-    client=Groq()  
-    messages=[
+def analyze_image_with_query(query, model, encoded_image=None):#here encoded_image=None because i just dont want to make in mandatory as i can audio input also
+    client = Groq()
+    
+    messages = [
         {
             "role": "user",
             "content": [
-                {
-                    "type": "text", 
-                    "text": query
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{encoded_image}",
-                    },
-                },
-            ],
-        }]
-    chat_completion=client.chat.completions.create(
+                {"type": "text", "text": query}
+            ]
+        }
+    ]
+
+    # Only add image if it's present
+    if encoded_image:
+        messages[0]["content"].append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/jpeg;base64,{encoded_image}",
+            }
+        })
+
+    chat_completion = client.chat.completions.create(
         messages=messages,
         model=model
     )
 
     return chat_completion.choices[0].message.content
+
+
+   
 

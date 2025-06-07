@@ -6,9 +6,12 @@ seaborn
 tensorflow
 scikit-learn
 ipython
-grok
+groq
 pyaudio
 speechrecognition
 gtts
 elevenlabs
 gradio
+pyngrok
+soundfile
+python-dotenv

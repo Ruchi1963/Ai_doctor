@@ -4,9 +4,6 @@ import gradio as gr
 from dotenv import load_dotenv
 from pyngrok import ngrok  # Importing pyngrok to create a public URL
 
-#import subprocess
-
-
 load_dotenv()
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow warnings
@@ -27,14 +24,21 @@ Dont respond as an AI model in markdown, your answer should mimic that of an act
 Keep your answer concise (max 2 sentences). No preamble, start your answer right away please"""
 
 def contains_hsi_keywords(speech_text):
-    keywords = ["hsi", "hyperspectral", "tissue"]
+    keywords = ["hsi", "hyperspectral imaging", "tissue"]
     return any(keyword.lower() in speech_text.lower() for keyword in keywords)
 
 def is_hsi_image(image_path):
     return image_path and image_path.lower().endswith(('.mat', '.npy', '.hdr'))
 
-
- 
+# 1. Resetting function to clear all states
+def clear_state():
+    return (
+        None,
+        None,
+        gr.update(value=""),
+        gr.update(value=""),
+        gr.update(value=None)
+    )
 
 def process_inputs(audio_filepath, image_pil):
     speech_text = ""
@@ -99,22 +103,12 @@ def process_inputs(audio_filepath, image_pil):
 
     return speech_text, diagnosis, audio_output_path if os.path.exists(audio_output_path) else None
 
-
 def replay_audio():
     audio_path = "static/final.mp3"
     return audio_path if os.path.exists(audio_path) else None
 
 def download_audio():
     return "static/final.mp3" if os.path.exists("static/final.mp3") else None
-
-def clear_functionality(audio_input, image_input, speech_output, diagnosis_output, audio_output):
-    return (
-        None,
-        None,
-        gr.update(value=""),
-        gr.update(value=""),
-        gr.update(value=None)
-    )
 
 # Enhanced UI with spinner
 with gr.Blocks(theme=gr.themes.Soft(primary_hue="teal", secondary_hue="indigo"), css=""" 
@@ -188,8 +182,8 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="teal", secondary_hue="indigo"),
 
     # Clear button functionality
     clear_btn.click(
-        fn=clear_functionality,
-        inputs=[audio_input, image_input, speech_output, diagnosis_output, audio_output],
+        fn=clear_state,
+        inputs=[],
         outputs=[audio_input, image_input, speech_output, diagnosis_output, audio_output]
     )
 
@@ -197,14 +191,14 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="teal", secondary_hue="indigo"),
 if __name__ == "__main__":
     try:
         # Create a public URL using ngrok
-        public_url = ngrok.connect(7865) #while running file make specific port busy then change it to something else like  something else, like 7861 or 8000
+        public_url = ngrok.connect(7865) # Change to a different port if necessary
         print("🌐 Public Ngrok URL:", public_url)
         
         # Launch Gradio with the same port
         iface.launch(
             debug=True,
             share=False,  # Keep share=False since ngrok will handle the public URL
-            server_port=7865,#just make sure that ngtok port(puvlic_url) and local host port(server port) are same
+            server_port=7865,  # Ensure ngrok port and local port are the same
             server_name="0.0.0.0",
             show_error=True,
             prevent_thread_lock=True,
