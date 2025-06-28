@@ -34,8 +34,6 @@ def is_hsi_image(image_path):
     return image_path and image_path.lower().endswith(('.mat', '.npy', '.hdr'))
 
 
- 
-
 def process_inputs(audio_filepath, image_pil):
     speech_text = ""
     diagnosis = ""
@@ -197,14 +195,14 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="teal", secondary_hue="indigo"),
 if __name__ == "__main__":
     try:
         # Create a public URL using ngrok
-        public_url = ngrok.connect(7865) #while running file make specific port busy then change it to something else like  something else, like 7861 or 8000
-        print("🌐 Public Ngrok URL:", public_url)
+        #public_url = ngrok.connect(7865) #while running file make specific port busy then change it to something else like  something else, like 7861 or 8000
+        #print("🌐 Public Ngrok URL:", public_url)
         
         # Launch Gradio with the same port
         iface.launch(
             debug=True,
             share=False,  # Keep share=False since ngrok will handle the public URL
-            server_port=7865,#just make sure that ngtok port(puvlic_url) and local host port(server port) are same
+            server_port=7865,#just make sure that ngtok port(public_url) and local host port(server port) are same
             server_name="0.0.0.0",
             show_error=True,
             prevent_thread_lock=True,
