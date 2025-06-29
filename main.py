@@ -2,20 +2,18 @@ import os
 
 import gradio as gr
 from dotenv import load_dotenv
-from pyngrok import ngrok  # Importing pyngrok to create a public URL
-
-#import subprocess
-
+from pyngrok import ngrok
 
 load_dotenv()
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow warnings
 
 # Imports from your custom modules
 from brain_of_the_doctor import analyze_image_with_query, encode_image
 from breast_cancer_classifer import breast_cancer_detection_model
-from voice_of_the_doctor import text_to_speech_with_elevenlabs
-from voice_of_the_patient import transcribe_with_groq
+from voice_of_the_doctor import \
+    text_to_speech_with_google  # ⬅️ Google TTS function
+from voice_of_the_patient import \
+    transcribe_with_google  # ⬅️ Google STT function
 
 # System Prompt
 system_prompt = """You have to act as a professional doctor, i know you are not but this is for learning purpose. 
@@ -42,11 +40,7 @@ def process_inputs(audio_filepath, image_pil):
     try:
         # Step 1: Transcribe audio if provided
         if audio_filepath:
-            speech_text = transcribe_with_groq(
-                GROQ_API_KEY=os.environ.get("GROQ_API_KEY"),
-                audio_filepath=audio_filepath,
-                stt_model="whisper-large-v3"
-            )
+            speech_text = transcribe_with_google(audio_filepath)  # ✅ Using Google STT
 
         # Step 2: Prepare image if provided
         image_filepath = None
@@ -62,31 +56,28 @@ def process_inputs(audio_filepath, image_pil):
 
         # Step 4: Multimodal Diagnosis
         elif encoded_image and speech_text:
-            # Case: Image + Audio
             diagnosis = analyze_image_with_query(
                 query=system_prompt + " " + speech_text,
                 encoded_image=encoded_image,
                 model="meta-llama/llama-4-scout-17b-16e-instruct"
             )
         elif encoded_image:
-            # Case: Image only
             diagnosis = analyze_image_with_query(
                 query=system_prompt,
                 encoded_image=encoded_image,
                 model="meta-llama/llama-4-scout-17b-16e-instruct"
             )
         elif speech_text:
-            # Case: Audio only
             diagnosis = analyze_image_with_query(
                 query=system_prompt + " " + speech_text,
-                encoded_image=None,  # Important fix
+                encoded_image=None,
                 model="meta-llama/llama-4-scout-17b-16e-instruct"
             )
         else:
             diagnosis = "Please provide at least an image or audio to begin diagnosis."
 
         # Step 5: Generate voice output
-        text_to_speech_with_elevenlabs(
+        text_to_speech_with_google(
             input_text=diagnosis,
             output_filepath=audio_output_path
         )
@@ -114,7 +105,7 @@ def clear_functionality(audio_input, image_input, speech_output, diagnosis_outpu
         gr.update(value=None)
     )
 
-# Enhanced UI with spinner
+# Gradio UI
 with gr.Blocks(theme=gr.themes.Soft(primary_hue="teal", secondary_hue="indigo"), css=""" 
     body {
         background: linear-gradient(to right, #ccfbf1, #e0f2fe);
@@ -177,32 +168,24 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="teal", secondary_hue="indigo"),
         analyze_btn = gr.Button("🧠 Analyze & Diagnose")
         clear_btn = gr.Button("🧹 Clear")
 
-    # Main button functionality
     analyze_btn.click(
         fn=process_inputs,
         inputs=[audio_input, image_input],
         outputs=[speech_output, diagnosis_output, audio_output]
     )
 
-    # Clear button functionality
     clear_btn.click(
         fn=clear_functionality,
         inputs=[audio_input, image_input, speech_output, diagnosis_output, audio_output],
         outputs=[audio_input, image_input, speech_output, diagnosis_output, audio_output]
     )
 
-
 if __name__ == "__main__":
     try:
-        # Create a public URL using ngrok
-        #public_url = ngrok.connect(7865) #while running file make specific port busy then change it to something else like  something else, like 7861 or 8000
-        #print("🌐 Public Ngrok URL:", public_url)
-        
-        # Launch Gradio with the same port
         iface.launch(
             debug=True,
-            share=False,  # Keep share=False since ngrok will handle the public URL
-            server_port=7865,#just make sure that ngtok port(public_url) and local host port(server port) are same
+            share=False,
+            server_port=7865,
             server_name="0.0.0.0",
             show_error=True,
             prevent_thread_lock=True,
